@@ -40,6 +40,16 @@ type HttpRequestData struct {
 	Content string `yaml:"content"`
 }
 
+type FromRequest struct {
+	URL             string            `yaml:"url"`
+	Method          string            `yaml:"method"`
+	Data            HttpRequestData   `yaml:"data"`
+	FollowRedirects bool              `yaml:"followRedirects"`
+	BasicAuth       []string          `yaml:"basicAuth"`
+	Headers         map[string]string `yaml:"headers"`
+	HeaderWhitelist []string          `yaml:"headerWhitelist"`
+}
+
 type HttpTestData struct {
 	Name            string             `yaml:"name"`
 	URL             string             `yaml:"url"`
@@ -58,14 +68,13 @@ type BodyData struct {
 }
 
 type HttpExpectTestData struct {
-	Status  int               `yaml:"status"`
-	Body    BodyData          `yaml:"body"`
-	Headers map[string]string `yaml:"headers"`
+	Status      int               `yaml:"status"`
+	Body        BodyData          `yaml:"body"`
+	Headers     map[string]string `yaml:"headers"`
+	FromRequest *FromRequest      `yaml:"fromRequest"`
 }
 
-func runTest(t *testing.T, data HttpTestData) {
-	t.Log("URL:", data.URL)
-
+func doRequest(t *testing.T, data *HttpTestData) (*http.Response, string, error) {
 	var method string
 	var reqBody io.Reader
 
@@ -86,8 +95,7 @@ func runTest(t *testing.T, data HttpTestData) {
 
 	req, err := http.NewRequest(method, data.URL, reqBody)
 	if err != nil {
-		t.Error("failed preparing the request;", err)
-		return
+		return nil, "", err
 	}
 
 	for k, v := range data.Headers {
@@ -107,14 +115,53 @@ func runTest(t *testing.T, data HttpTestData) {
 	client := http.Client{CheckRedirect: checkRedirect}
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Error("get() failed;", err)
-		return
+		return nil, "", err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		t.Error(err)
+		return nil, "", err
+	}
+
+	return resp, string(body), nil
+}
+
+func runTest(t *testing.T, data HttpTestData) {
+	t.Log("URL:", data.URL)
+
+	resp, body, err := doRequest(t, &data)
+	if err != nil {
+		t.Errorf("Test %s failed making request; %v", data.Name, err)
 		return
+	}
+
+	if data.Expect.FromRequest != nil {
+		req := HttpTestData{
+			URL:             data.Expect.FromRequest.URL,
+			Method:          data.Expect.FromRequest.Method,
+			Data:            data.Expect.FromRequest.Data,
+			FollowRedirects: data.Expect.FromRequest.FollowRedirects,
+			BasicAuth:       data.Expect.FromRequest.BasicAuth,
+			Headers:         data.Expect.FromRequest.Headers,
+		}
+
+		t.Log("Fetching fromRequest;", req.URL)
+		expectResp, expectBody, err := doRequest(t, &req)
+		if err != nil {
+			t.Errorf("Test %s failed making fromRequest; %v", data.Name, err)
+			return
+		}
+
+		data.Expect.Status = expectResp.StatusCode
+		data.Expect.Body.Content = expectBody
+
+		if data.Expect.Headers == nil {
+			data.Expect.Headers = map[string]string{}
+		}
+
+		for _, h := range data.Expect.FromRequest.HeaderWhitelist {
+			data.Expect.Headers[h] = expectResp.Header.Get(h)
+		}
 	}
 
 	if data.Expect.Status != 0 {
@@ -132,26 +179,26 @@ func runTest(t *testing.T, data HttpTestData) {
 	}
 
 	if data.Expect.Body.Empty {
-		if string(body) != "" {
-			t.Errorf("got: '%s', want: '<empty>'", string(body))
+		if body != "" {
+			t.Errorf("got: '%s', want: '<empty>'", body)
 		}
 	}
 
 	if data.Expect.Body.Content != "" {
-		if string(body) != data.Expect.Body.Content {
-			t.Errorf("got: '%s', want: '%s'", string(body), data.Expect.Body.Content)
+		if body != data.Expect.Body.Content {
+			t.Errorf("got: '%s', want: '%s'", body, data.Expect.Body.Content)
 		}
 
 	}
 
 	if data.Expect.Body.Regex != "" {
-		matched, err := regexp.Match(data.Expect.Body.Regex, body)
+		matched, err := regexp.MatchString(data.Expect.Body.Regex, body)
 		if err != nil {
 			t.Error("failed to use regex to match;", err)
 		}
 
 		if !matched {
-			t.Errorf("got: '%s', want match: '%s'", string(body), data.Expect.Body.Regex)
+			t.Errorf("got: '%s', want match: '%s'", body, data.Expect.Body.Regex)
 		}
 	}
 }

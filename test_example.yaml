@@ -85,3 +85,12 @@
   expect:
     body:
       regex: '(?s:"json":\s*{\s*"example":\s*"test".*})'
+
+- name: Test fromRequest
+  url: http://httpbin.org/get
+  expect:
+    fromRequest:
+      url: http://httpbin.org/get
+      headerWhitelist:
+        - content-type
+

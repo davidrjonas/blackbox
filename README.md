@@ -83,6 +83,19 @@ A heavily annotated example of all the options. Also see the [test_example.yaml]
     # Header values must match exactly
     headers:
       content-type: text/plain
+
+    # Okay, this is cool. Use another request as a prototype against which to
+    # compare. When testing the new version of an API you can compare against the
+    # old version.
+    fromRequest:
+      # All the same options as the top level request
+      url: http://httpbin.org/get
+
+      # There is one that isn't at the top level, headerWhitelist. These are
+      # the headers that will be compared. We can't compare all headers because
+      # many change per request, such as Date:
+      headerWhitelist:
+        - content-type
 ```
 
 Additional Template Functions
@@ -146,7 +159,7 @@ Future Features
 ---------------
 
 - [ ] JSON Schema matching (expect.body.jsonSchema)
-- [ ] Use another request response as a template to match (expect.fromRequest)
+- [X] Use another request response as a template to match (expect.fromRequest)
 
 
 Similar Projects
