@@ -14,13 +14,23 @@ By default, `blackbox` looks for files named `test*.yaml` in the current directo
 
 ```bash
 Usage of ./blackbox [files...]
-  ... # lots of `go test` flags elided
+  # ... lots of `go test` flags elided. Just the useful ones for us included here.
+  -test.failfast
+        do not start new tests after the first test failure
+  -test.run regexp
+        run only tests and examples matching regexp
   -test.v
         verbose: print additional output
   -wait-extra int
         Seconds to wait regardless of -wait-for-url status [env: BLACKBOX_WAIT_EXTRA]
   -wait-for-url string
         Wait for this url to become available (status 200) [env: BLACKBOX_WAIT_FOR_URL]
+```
+
+Run only select tests
+
+```bash
+blackbox -test.v -test.run '.*/Test_POST_json'
 ```
 
 A heavily annotated example of all the options. Also see the [test_example.yaml](test_example.yaml).
