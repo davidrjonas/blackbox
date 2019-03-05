@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"testing"
 	"text/template"
 	"time"
@@ -18,20 +19,19 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/Masterminds/sprig"
+	"github.com/alexsasharegan/dotenv"
 )
 
 var (
-	waitExtra  int
+	waitExtra  int64
 	waitForUrl string
-
-	glob string
 
 	data []HttpTestData
 )
 
 func init() {
-	flag.IntVar(&waitExtra, "wait-extra", 0, "Seconds to wait regardless of -wait-for-url status")
-	flag.StringVar(&waitForUrl, "wait-for-url", "", "Wait for this url to become available (status 200)")
+	flag.Int64Var(&waitExtra, "wait-extra", 0, "Seconds to wait regardless of -wait-for-url status [env: BLACKBOX_WAIT_EXTRA]")
+	flag.StringVar(&waitForUrl, "wait-for-url", "", "Wait for this url to become available (status 200) [env: BLACKBOX_WAIT_FOR_URL]")
 }
 
 type HttpTestData struct {
@@ -215,6 +215,25 @@ func wait(url string) {
 func TestMain(m *testing.M) {
 	flag.Parse()
 
+	err := dotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	if waitForUrl == "" {
+		if v := os.Getenv("BLACKBOX_WAIT_FOR_URL"); v != "" {
+			waitForUrl = v
+		}
+	}
+
+	if waitExtra == 0 {
+		if v := os.Getenv("BLACKBOX_WAIT_EXTRA"); v != "" {
+			waitExtra, err = strconv.ParseInt(v, 10, 0)
+			if err != nil {
+				log.Fatal("BLACKBOX_WAIT_EXTRA:", err)
+			}
+		}
+	}
 	if waitForUrl != "" {
 		if u, err := url.Parse(waitForUrl); err != nil || u.Scheme == "" || u.Host == "" {
 			if err == nil {

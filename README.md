@@ -17,9 +17,9 @@ Usage of ./blackbox [files...]
   -test.v
         verbose: print additional output
   -wait-extra int
-        Seconds to wait regardless of -wait-for-url status
+        Seconds to wait regardless of -wait-for-url status [env: BLACKBOX_WAIT_EXTRA]
   -wait-for-url string
-        Wait for this url to become available (status 200)
+        Wait for this url to become available (status 200) [env: BLACKBOX_WAIT_FOR_URL]
 ```
 
 A heavily annotated example of all the options. Also see the [test_example.yaml](test_example.yaml).
