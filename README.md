@@ -5,6 +5,7 @@ Blackbox is a simple yaml-driven http testing tool built on go's included testin
 
 - Define tests in YAML.
 - YAML can use [go templates](https://golang.org/pkg/text/template/) with [Sprig functions](http://masterminds.github.io/sprig/)
+- .env support
 
 Usage
 -----
