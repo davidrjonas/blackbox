@@ -38,9 +38,10 @@
       regex: '"url": "https://httpbin\.org/get"'
 
 - name: Test Envvars
-  url: http://httpbin.org/get?home={{env "HOME" | urlencode}}
+  url: http://httpbin.org/get?home={{env "HOME" | urlencode}}&dne={{env "DNE" | urlencode}}
   expect:
     body:
+      # Wrapping parts of your regex in (?s:) will make . match new lines
       regex: '(?s:"args":.*{.*"home":)'
 
 - name: Test Add Headers
@@ -64,3 +65,23 @@
     status: 200
     body:
       regex: '"url": "https://httpbin.org/get"'
+
+- name: Test POST
+  url: http://httpbin.org/post
+  # Setting data automatically makes the request a POST and sets the
+  # content-type to application/x-www-form-urlencoded if it is not already set.
+  data:
+    content: example=test
+  expect:
+    body:
+      regex: '(?s:"example":\s*"test".+"Content-Type":\s*"application/x-www-form-urlencoded")'
+
+- name: Test POST json
+  url: http://httpbin.org/post
+  headers:
+    content-type: application/json
+  data:
+    content: '{"example":"test"}'
+  expect:
+    body:
+      regex: '(?s:"json":\s*{\s*"example":\s*"test".*})'

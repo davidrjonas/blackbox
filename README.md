@@ -32,6 +32,15 @@ A heavily annotated example of all the options. Also see the [test_example.yaml]
   # The URL to test. You can use env vars easily.
   url: http://httpbin.org/get?home={{env "HOME" | urlencode }}
 
+  # Defafults to GET unless data is set, then POST
+  method: GET
+
+  # Setting data automatically makes the request a POST and sets the
+  # content-type to application/x-www-form-urlencoded if it is not already set.
+  # If you want json, for now you need to set the header.
+  data:
+    content: example=test
+
   # Add headers
   headers:
     host: publicname.example.org

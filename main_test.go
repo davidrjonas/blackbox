@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 	"text/template"
 	"time"
@@ -34,9 +36,15 @@ func init() {
 	flag.StringVar(&waitForUrl, "wait-for-url", "", "Wait for this url to become available (status 200) [env: BLACKBOX_WAIT_FOR_URL]")
 }
 
+type HttpRequestData struct {
+	Content string `yaml:"content"`
+}
+
 type HttpTestData struct {
 	Name            string             `yaml:"name"`
 	URL             string             `yaml:"url"`
+	Method          string             `yaml:"method"`
+	Data            HttpRequestData    `yaml:"data"`
 	FollowRedirects bool               `yaml:"followRedirects"`
 	BasicAuth       []string           `yaml:"basicAuth"`
 	Headers         map[string]string  `yaml:"headers"`
@@ -58,7 +66,25 @@ type HttpExpectTestData struct {
 func runTest(t *testing.T, data HttpTestData) {
 	t.Log("URL:", data.URL)
 
-	req, err := http.NewRequest("GET", data.URL, nil)
+	var method string
+	var reqBody io.Reader
+
+	if data.Method != "" {
+		method = data.Method
+	} else if data.Data.Content != "" {
+		method = "POST"
+		reqBody = strings.NewReader(data.Data.Content)
+		if _, ok := data.Headers["content-type"]; !ok {
+			if data.Headers == nil {
+				data.Headers = make(map[string]string)
+			}
+			data.Headers["content-type"] = "application/x-www-form-urlencoded"
+		}
+	} else {
+		method = "GET"
+	}
+
+	req, err := http.NewRequest(method, data.URL, reqBody)
 	if err != nil {
 		t.Error("failed preparing the request;", err)
 		return
