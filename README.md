@@ -158,9 +158,10 @@ GOOS=linux GOARCH=arm64 make blackbox
 Future Features
 ---------------
 
-- [ ] JSON Schema matching (expect.body.jsonSchema)
+- [X] JSON Schema matching (expect.body.jsonSchema)
 - [X] Use another request response as a template to match (expect.fromRequest)
-
+- [ ] Simple JSON data matchers
+- [ ] Validate JSON Schema earlier
 
 Similar Projects
 ----------------

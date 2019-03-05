@@ -94,3 +94,25 @@
       headerWhitelist:
         - content-type
 
+- name: Test JSON Schema
+  url: http://httpbin.org/basic-auth/user/passwd
+  basicAuth: ["user", "passwd"]
+  expect:
+    status: 200
+    body:
+      # See http://json-schema.org/
+      # and https://github.com/qri-io/jsonschema
+      jsonSchema: |-
+        {
+          "title": "Authed",
+          "type": "object",
+          "properties": {
+            "authenticated": {
+              "type": "boolean"
+            },
+            "user": {
+              "type": "string"
+            }
+          },
+          "required": ["authenticated", "user"]
+        }

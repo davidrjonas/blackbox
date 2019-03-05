@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"io"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/alexsasharegan/dotenv"
+	"github.com/qri-io/jsonschema"
 )
 
 var (
@@ -62,9 +64,10 @@ type HttpTestData struct {
 }
 
 type BodyData struct {
-	Content string `yaml:"content"`
-	Regex   string `yaml:"regex"`
-	Empty   bool   `yaml:"empty"`
+	Content    string `yaml:"content"`
+	Regex      string `yaml:"regex"`
+	Empty      bool   `yaml:"empty"`
+	JsonSchema string `yaml:"jsonSchema"`
 }
 
 type HttpExpectTestData struct {
@@ -199,6 +202,24 @@ func runTest(t *testing.T, data HttpTestData) {
 
 		if !matched {
 			t.Errorf("got: '%s', want match: '%s'", body, data.Expect.Body.Regex)
+		}
+	}
+
+	if data.Expect.Body.JsonSchema != "" {
+		assertJsonSchema(t, data.Expect.Body.JsonSchema, body)
+	}
+}
+
+func assertJsonSchema(t *testing.T, rawSchema string, body string) {
+	rs := &jsonschema.RootSchema{}
+	if err := json.Unmarshal([]byte(rawSchema), rs); err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	if errs, _ := rs.ValidateBytes([]byte(body)); len(errs) > 0 {
+		for _, err := range errs {
+			t.Error("schema:", err)
 		}
 	}
 }
