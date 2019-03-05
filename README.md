@@ -116,3 +116,9 @@ Future Features
 - [ ] JSON Schema matching (expect.body.jsonSchema)
 - [ ] Use another request response as a template to match (expect.fromRequest)
 
+
+Similar Projects
+----------------
+
+- [pyresttest](https://github.com/svanoort/pyresttest)
+- [tavern](https://github.com/taverntesting/tavern)
