@@ -124,6 +124,24 @@ Now run your tests in that environment. `--abort-on-container-exit` will make th
 docker-compose up --abort-on-container-exit
 ```
 
+Build From Source
+-----------------
+
+The build is a little odd since we want to run `TestMain()` and use the built-in test framework which is normally stripped from a binary. Luckily, `go test` has an escape hatch for building a test binary.
+
+Regardless, [Makefile](Makefile) has everything you need.
+
+```bash
+make blackbox
+```
+
+Cross-compile with the usual `GOOS` and `GOARCH`
+
+```bash
+GOOS=linux GOARCH=arm64 make blackbox
+# outputs blackbox-linux-arm64
+```
+
 Future Features
 ---------------
 

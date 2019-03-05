@@ -4,7 +4,7 @@ GOARCH := $(shell echo $${GOARCH:-$$(go env GOARCH)})
 all: blackbox blackbox-linux
 
 blackbox: *.go
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -c -o blackbox-$(GOOS)-$(GOARCH)
+	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go test -c -o blackbox-$(GOOS)-$(GOARCH)
 
 blackbox-linux:
 	GOOS=linux $(MAKE) blackbox
