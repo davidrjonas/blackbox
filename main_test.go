@@ -212,12 +212,27 @@ func wait(url string) {
 	}
 }
 
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if !os.IsNotExist(err) {
+		log.Println("exists:", err)
+	}
+	return false
+}
+
 func TestMain(m *testing.M) {
 	flag.Parse()
 
-	err := dotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	var err error
+
+	if exists(".env") {
+		err = dotenv.Load()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if waitForUrl == "" {
