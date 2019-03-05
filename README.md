@@ -108,19 +108,13 @@ services:
     image: mccutchen/go-httpbin
 
   blackbox:
-    image: busybox
-    command:
-      - blackbox
-      - -test.v
-      - -wait-for-url
-      - http://httpbin:8080/get
-      - -wait-extra
-      - "2"
+    image: davidrjonas/blackbox
     environment:
+      # In your tests use HOST like `url: http://{{env "HOST"}}/get`
       - HOST=httpbin:8080
-    workdir: /tests
+      - BLACKBOX_WAIT_FOR_URL=http://httpbin:8080/get
+      - BLACKBOX_WAIT_EXTRA=2
     volumes:
-      - blackbox-linux-amd64:/usr/local/bin/blackbox
       - ./:/tests
 ```
 
