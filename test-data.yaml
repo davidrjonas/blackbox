@@ -1,0 +1,66 @@
+- name: Test Auth Expected
+  url: http://httpbin.org/basic-auth/user/passwd
+  expect:
+    status: 401
+    body:
+      empty: true
+    headers:
+      www-authenticate: Basic realm="Fake Realm"
+
+- name: Test Auth Provided
+  url: http://httpbin.org/basic-auth/user/passwd
+  basicAuth: ["user", "passwd"]
+  expect:
+    status: 200
+    body:
+      regex: '"authenticated": true'
+
+- name: Test Status Codes (201)
+  url: http://httpbin.org/status/201
+  expect:
+    status: 201
+
+- name: Test Status Codes (301)
+  url: http://httpbin.org/status/301
+  expect:
+    status: 301
+
+- name: Test Status Codes (500)
+  url: http://httpbin.org/status/500
+  expect:
+    status: 500
+
+- name: Test Regex
+  url: http://httpbin.org/get
+  expect:
+    body:
+      # See https://github.com/google/re2/wiki/Syntax
+      regex: '"url": "https://httpbin\.org/get"'
+
+- name: Test Envvars
+  url: http://httpbin.org/get?home={{env "HOME" | urlencode}}
+  expect:
+    body:
+      regex: '(?s:"args":.*{.*"home":)'
+
+- name: Test Add Headers
+  url: http://httpbin.org/get
+  headers:
+    x-example: test
+  expect:
+    body:
+      regex: '"X-Example": "test"'
+
+- name: Test Receive Headers
+  url: https://httpbin.org/response-headers?x-example=test
+  expect:
+    headers:
+      x-example: test
+
+- name: Test Follow Redirects
+  url: http://httpbin.org/status/301
+  followRedirects: true # default is false
+  expect:
+    status: 200
+    body:
+      regex: '"url": "https://httpbin.org/get"'
